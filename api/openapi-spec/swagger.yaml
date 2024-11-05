@@ -1,0 +1,202 @@
+openapi: "3.0.2"
+info:
+  title: Contact Management RESTful API
+  description: OPEN API Documentation for Spring Boot Contact Management Application
+  version: "1.0.0-SNAPSHOT"
+servers:
+  - url: http://localhost:8000
+    description: Development server (local)
+paths:
+  /api/auth/register:
+    post:
+      description: Register new user account
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                name:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Success login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+  /api/auth/login:
+    post:
+      description: Login with created account
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Success register new user account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+  /api/auth/logout:
+    post:
+      description: Logout
+      security:
+        - apiKey: []
+      tags:
+        - users
+      responses:
+        '200':
+          description: Success logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/users/me:
+    get:
+      description: Get user profile
+      security:
+        - apiKey: []
+      tags:
+        - users
+      responses:
+        '200':
+          description: Success get user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+  /api/users/{userId}:
+    parameters:
+      - name: userId
+        required: true
+        in: path
+        schema:
+          type: number
+    patch:
+      description: Update user profile
+      security:
+        - apiKey: []
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Success update user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+    delete:
+      description: Delete user account
+      security:
+        - apiKey: []
+      tags:
+        - users
+      responses:
+        '200':
+          description: Success delete user account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-KEY
+      in: cookie
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: number
+        username:
+          type: string
+        name:
+          type: string
+    BadRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
