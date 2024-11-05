@@ -79,7 +79,7 @@ paths:
     post:
       description: Logout
       security:
-        - apiKey: []
+        - apiKey: [ ]
       tags:
         - users
       responses:
@@ -96,7 +96,7 @@ paths:
     get:
       description: Get user profile
       security:
-        - apiKey: []
+        - apiKey: [ ]
       tags:
         - users
       responses:
@@ -121,7 +121,7 @@ paths:
     patch:
       description: Update user profile
       security:
-        - apiKey: []
+        - apiKey: [ ]
       tags:
         - users
       requestBody:
@@ -156,7 +156,7 @@ paths:
     delete:
       description: Delete user account
       security:
-        - apiKey: []
+        - apiKey: [ ]
       tags:
         - users
       responses:
@@ -169,6 +169,152 @@ paths:
                 properties:
                   message:
                     type: string
+  /api/contacts:
+    get:
+      parameters:
+        - name: name
+          description: Contact first name or last name
+          in: query
+          schema:
+            type: string
+        - name: email
+          description: Contact email
+          in: query
+          schema:
+            type: string
+        - name: phone
+          description: Contact phone number
+          in: query
+          schema:
+            type: string
+        - name: page
+          description: Page number
+          in: query
+          schema:
+            type: number
+        - name: size
+          description: Page size
+          in: query
+          schema:
+            type: number
+      description: Search contacts
+      security:
+        - apiKey: [ ]
+      tags:
+        - contacts
+      responses:
+        '200':
+          description: Success search contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contact"
+                  paging:
+                    $ref: "#/components/schemas/PageMetaData"
+    post:
+      description: Create new contacts
+      security:
+        - apiKey: [ ]
+      tags:
+        - contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrUpdateContact"
+      responses:
+        '201':
+          description: Success create new contact
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Contact"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+  /api/contacts/{contactId}:
+    parameters:
+      - name: contactId
+        required: true
+        in: path
+        schema:
+          type: number
+    get:
+      description: Get contact detail
+      security:
+        - apiKey: [ ]
+      tags:
+        - contacts
+      responses:
+        '200':
+          description: Success get contact detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+    put:
+      description: Update contact
+      security:
+        - apiKey: [ ]
+      tags:
+        - contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrUpdateContact"
+      responses:
+        '200':
+          description: Success update contact
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Contact"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+    delete:
+      description: Delete contact
+      security:
+        - apiKey: [ ]
+      tags:
+        - contacts
+      responses:
+        '200':
+          description: Success delete contact
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
 
 components:
   securitySchemes:
@@ -186,6 +332,39 @@ components:
           type: string
         name:
           type: string
+    CreateOrUpdateContact:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+    Contact:
+      type: object
+      properties:
+        id:
+          type: number
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+    PageMetaData:
+      type: object
+      properties:
+        totalPage:
+          type: number
+        size:
+          type: number
+        hasNext:
+          type: boolean
     BadRequest:
       type: object
       properties:
