@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.validation.ConstraintViolationException;
 import jordanmarcelino.contact.dto.*;
+import jordanmarcelino.contact.entity.User;
 import jordanmarcelino.contact.exception.LoginFailedException;
 import jordanmarcelino.contact.exception.UserAlreadyRegisteredException;
+import jordanmarcelino.contact.repository.UserRepository;
 import jordanmarcelino.contact.service.AuthService;
 import jordanmarcelino.contact.util.Message;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +42,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     void testRegisterSuccess() throws Exception {
@@ -126,15 +133,16 @@ class AuthControllerTest {
         UserLoginRequest request = new UserLoginRequest("test", "test");
         mockMvc.perform(
                 post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
         ).andExpectAll(
                 status().isBadRequest()
         ).andDo(result -> {
             WebResponse<Object> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
             assertEquals(Message.BAD_REQUEST, response.getMessage());
@@ -161,7 +169,8 @@ class AuthControllerTest {
         ).andDo(result -> {
             WebResponse<Object> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
             assertNull(response.getData());
@@ -188,7 +197,8 @@ class AuthControllerTest {
         ).andDo(result -> {
             WebResponse<Object> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
             Cookie cookie = result.getResponse().getCookie("X-API-KEY");
@@ -200,5 +210,67 @@ class AuthControllerTest {
         });
 
         verify(authService, times(1)).login(request);
+    }
+
+    @Test
+    void testLogoutUnauthorized() throws Exception {
+        when(userRepository.findByToken(anyString()))
+                .thenReturn(Optional.empty());
+        doNothing().when(authService).logout(any(User.class));
+
+        Cookie apiKey = new Cookie("X-API-KEY", "none");
+        mockMvc.perform(
+                post("/api/auth/logout")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(authService, times(0)).logout(any(User.class));
+    }
+
+    @Test
+    void testLogoutSuccess() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("test");
+        user.setName("test");
+        user.setTokenExpiredAt(Instant.now().plus(Duration.ofDays(1L)).toEpochMilli());
+
+        when(userRepository.findByToken(anyString()))
+                .thenReturn(Optional.of(user));
+        doNothing().when(authService).logout(any(User.class));
+
+        Cookie apiKey = new Cookie("X-API-KEY", UUID.randomUUID().toString());
+        mockMvc.perform(
+                post("/api/auth/logout")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(authService, times(1)).logout(any(User.class));
     }
 }
