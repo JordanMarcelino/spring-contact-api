@@ -1,9 +1,9 @@
 package jordanmarcelino.contact.controller;
 
-import jordanmarcelino.contact.dto.UserRegisterRequest;
-import jordanmarcelino.contact.dto.UserResponse;
-import jordanmarcelino.contact.dto.WebResponse;
-import jordanmarcelino.contact.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jordanmarcelino.contact.dto.*;
+import jordanmarcelino.contact.service.AuthService;
 import jordanmarcelino.contact.util.Message;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class AuthController {
 
-    private UserService userService;
+    private AuthService authService;
 
     @PostMapping(
             path = "/register",
@@ -24,11 +24,30 @@ public class AuthController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     public WebResponse<UserResponse> register(@RequestBody UserRegisterRequest request) {
-        UserResponse response = userService.register(request);
+        UserResponse response = authService.register(request);
 
         return WebResponse.<UserResponse>builder()
                 .message(Message.SUCCESS)
                 .data(response)
+                .build();
+    }
+
+    @PostMapping(
+            path = "/login",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<Object> register(@RequestBody UserLoginRequest request, HttpServletResponse response) {
+        Token token = authService.login(request);
+        Cookie cookie = new Cookie("X-API-KEY", token.getToken());
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+
+        response.addCookie(cookie);
+
+        return WebResponse.builder()
+                .message(Message.SUCCESS)
                 .build();
     }
 }
