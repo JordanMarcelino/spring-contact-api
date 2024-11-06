@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ErrorController {
@@ -19,15 +21,23 @@ public class ErrorController {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<WebResponse<Object>> handleConstraintViolationException(ConstraintViolationException exception) {
         Set<ConstraintViolation<?>> violations = exception.getConstraintViolations();
-        List<WebResponse.Error> errors = new ArrayList<>();
-        for (ConstraintViolation<?> violation : violations) {
-            errors.add(
-                    WebResponse.Error.builder()
-                            .field(violation.getPropertyPath().toString())
-                            .message(violation.getMessage())
-                            .build()
-            );
+        Map<String, String> fieldErrorMessages = new HashMap<>();
+
+        if (violations != null) {
+            for (ConstraintViolation<?> violation : violations) {
+                String field = violation.getPropertyPath().toString();
+                String message = violation.getMessage();
+
+                fieldErrorMessages.merge(field, message, (existing, newMsg) -> existing + "; " + newMsg);
+            }
         }
+
+        List<WebResponse.Error> errors = fieldErrorMessages.entrySet().stream()
+                .map(entry -> WebResponse.Error.builder()
+                        .field(entry.getKey())
+                        .message(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
 
         return ResponseEntity
                 .badRequest()
