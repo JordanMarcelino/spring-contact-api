@@ -30,16 +30,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
 
-    private final Validator validator;
+    private final ValidationService validationService;
 
 
     @Override
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
-        Set<ConstraintViolation<UserRegisterRequest>> violations = validator.validate(request);
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
+        validationService.validate(request);
 
         User user = new User();
         user.setUsername(request.getUsername());
