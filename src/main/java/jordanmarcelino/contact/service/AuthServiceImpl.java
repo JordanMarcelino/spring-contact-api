@@ -1,8 +1,5 @@
 package jordanmarcelino.contact.service;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
 import jordanmarcelino.contact.dto.Token;
 import jordanmarcelino.contact.dto.UserLoginRequest;
 import jordanmarcelino.contact.dto.UserRegisterRequest;
@@ -19,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.TemporalAmount;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -75,5 +70,13 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         return token;
+    }
+
+    @Override
+    public void logout(User user) {
+        user.setToken(null);
+        user.setTokenExpiredAt(null);
+
+        userRepository.save(user);
     }
 }

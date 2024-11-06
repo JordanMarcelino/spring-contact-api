@@ -3,6 +3,7 @@ package jordanmarcelino.contact.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jordanmarcelino.contact.dto.*;
+import jordanmarcelino.contact.entity.User;
 import jordanmarcelino.contact.service.AuthService;
 import jordanmarcelino.contact.util.Message;
 import lombok.AllArgsConstructor;
@@ -45,6 +46,19 @@ public class AuthController {
         cookie.setHttpOnly(true);
 
         response.addCookie(cookie);
+
+        return WebResponse.builder()
+                .message(Message.SUCCESS)
+                .build();
+    }
+
+    @PostMapping(
+            path = "/logout",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<Object> logout(User user) {
+        authService.logout(user);
 
         return WebResponse.builder()
                 .message(Message.SUCCESS)
