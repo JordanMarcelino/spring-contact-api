@@ -2,6 +2,7 @@ package jordanmarcelino.contact.controller;
 
 import jordanmarcelino.contact.dto.ContactResponse;
 import jordanmarcelino.contact.dto.CreateContactRequest;
+import jordanmarcelino.contact.dto.GetContactRequest;
 import jordanmarcelino.contact.dto.WebResponse;
 import jordanmarcelino.contact.entity.User;
 import jordanmarcelino.contact.service.ContactService;
@@ -27,6 +28,20 @@ public class ContactController {
     public WebResponse<ContactResponse> save(User user, @RequestBody CreateContactRequest request) {
         request.setUser(user);
         ContactResponse response = contactService.save(request);
+
+        return WebResponse.<ContactResponse>builder()
+                .message(Message.SUCCESS)
+                .data(response)
+                .build();
+    }
+
+    @GetMapping(
+            path = "/{contactId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<ContactResponse> get(User user, @PathVariable("contactId") Long contactId) {
+        ContactResponse response = contactService.get(new GetContactRequest(user, contactId));
 
         return WebResponse.<ContactResponse>builder()
                 .message(Message.SUCCESS)

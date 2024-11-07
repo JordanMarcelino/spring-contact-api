@@ -2,20 +2,29 @@ package jordanmarcelino.contact.service;
 
 import jordanmarcelino.contact.dto.*;
 import jordanmarcelino.contact.entity.Contact;
+import jordanmarcelino.contact.exception.NotFoundException;
 import jordanmarcelino.contact.repository.ContactRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
 public class ContactServiceImpl implements ContactService {
 
+    private final String CONTACT_NOT_FOUND = "contact not found";
+
     private final ContactRepository contactRepository;
 
     private final ValidationService validationService;
+
+    private ContactResponse toContactResponse(Contact contact) {
+        return new ContactResponse(contact.getId(), contact.getFirstName(), contact.getLastName(), contact.getEmail(),
+                contact.getPhone());
+    }
 
     @Override
     public List<ContactResponse> search(SearchContactRequest searchContactRequest) {
@@ -24,7 +33,12 @@ public class ContactServiceImpl implements ContactService {
 
     @Override
     public ContactResponse get(GetContactRequest request) {
-        return null;
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getId()).orElse(null);
+        if (Objects.isNull(contact)) {
+            throw new NotFoundException(CONTACT_NOT_FOUND);
+        }
+
+        return toContactResponse(contact);
     }
 
     @Override
@@ -40,8 +54,7 @@ public class ContactServiceImpl implements ContactService {
         contact.setPhone(request.getPhone());
         contactRepository.save(contact);
 
-        return new ContactResponse(contact.getId(), contact.getFirstName(), contact.getLastName(), contact.getEmail(),
-                contact.getPhone());
+        return toContactResponse(contact);
     }
 
     @Override
