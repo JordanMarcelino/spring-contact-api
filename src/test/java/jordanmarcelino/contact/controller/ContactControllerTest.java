@@ -6,8 +6,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.validation.ConstraintViolationException;
 import jordanmarcelino.contact.dto.ContactResponse;
 import jordanmarcelino.contact.dto.CreateContactRequest;
+import jordanmarcelino.contact.dto.GetContactRequest;
 import jordanmarcelino.contact.dto.WebResponse;
 import jordanmarcelino.contact.entity.User;
+import jordanmarcelino.contact.exception.NotFoundException;
 import jordanmarcelino.contact.repository.UserRepository;
 import jordanmarcelino.contact.service.ContactService;
 import jordanmarcelino.contact.util.Message;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -116,26 +119,68 @@ class ContactControllerTest {
     }
 
     @Test
-    void testCreateContactSuccess() throws Exception {
-        CreateContactRequest request = new CreateContactRequest();
-        request.setFirstName("test");
-        request.setLastName("test");
-        request.setEmail("test@gmail.com");
-        request.setPhone("0123456789");
+    void testGetContactUnauthorized() throws Exception {
+        mockMvc.perform(
+                get("/api/contacts/1")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<ContactResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<ContactResponse>>() {
+                    }
+            );
 
-        ContactResponse wantRes = new ContactResponse(1L, request.getFirstName(), request.getLastName(), request.getEmail(), request.getPhone());
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
 
-        when(contactService.save(any(CreateContactRequest.class)))
+    @Test
+    void testGetContactNotFound() throws Exception {
+        when(contactService.get(any(GetContactRequest.class)))
+                .thenThrow(new NotFoundException());
+
+        mockMvc.perform(
+                get("/api/contacts/1")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            WebResponse<ContactResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<ContactResponse>>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(contactService, times(1)).get(any(GetContactRequest.class));
+    }
+
+    @Test
+    void testGetContactSuccess() throws Exception {
+        ContactResponse wantRes = new ContactResponse();
+        wantRes.setId(1L);
+        wantRes.setFirstName("test");
+        wantRes.setLastName("test");
+        wantRes.setEmail("test@gmail.com");
+        wantRes.setPhone("0123456789");
+
+        when(contactService.get(any(GetContactRequest.class)))
                 .thenReturn(wantRes);
 
         mockMvc.perform(
-                post("/api/contacts")
-                        .contentType(MediaType.APPLICATION_JSON)
+                get("/api/contacts/1")
                         .accept(MediaType.APPLICATION_JSON)
                         .cookie(apiKey)
-                        .content(objectMapper.writeValueAsString(request))
         ).andExpectAll(
-                status().isCreated()
+                status().isOk()
         ).andDo(result -> {
             WebResponse<ContactResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
@@ -149,6 +194,7 @@ class ContactControllerTest {
         });
 
         verify(userRepository, times(1)).findByToken(anyString());
-        verify(contactService, times(1)).save(any(CreateContactRequest.class));
+        verify(contactService, times(1)).get(any(GetContactRequest.class));
     }
+
 }
