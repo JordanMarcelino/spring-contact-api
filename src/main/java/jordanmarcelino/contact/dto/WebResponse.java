@@ -1,6 +1,5 @@
 package jordanmarcelino.contact.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +19,8 @@ public class WebResponse<T> {
 
     private List<Error> errors;
 
+    private PageMetaData paging;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -29,5 +30,18 @@ public class WebResponse<T> {
         private String field;
 
         private String message;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class PageMetaData {
+
+        private Integer totalPage;
+
+        private Integer size;
+
+        private boolean hasNext;
     }
 }

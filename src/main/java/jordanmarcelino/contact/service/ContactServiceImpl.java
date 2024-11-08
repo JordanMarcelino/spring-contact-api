@@ -1,13 +1,20 @@
 package jordanmarcelino.contact.service;
 
+import jakarta.persistence.criteria.Predicate;
 import jordanmarcelino.contact.dto.*;
 import jordanmarcelino.contact.entity.Contact;
 import jordanmarcelino.contact.exception.NotFoundException;
 import jordanmarcelino.contact.repository.ContactRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,8 +34,42 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
-    public List<ContactResponse> search(SearchContactRequest searchContactRequest) {
-        return List.of();
+    public Page<ContactResponse> search(SearchContactRequest request) {
+        validationService.validate(request);
+
+        Specification<Contact> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.equal(root.get("user"), request.getUser()));
+
+            if (Objects.nonNull(request.getName())) {
+                predicates.add(
+                        builder.or(
+                                builder.like(root.get("firstName"), "%" + request.getName() + "%"),
+                                builder.like(root.get("lastName"), "%" + request.getName() + "%")
+                        )
+                );
+            }
+
+            if (Objects.nonNull(request.getEmail())) {
+                predicates.add(
+                        builder.like(root.get("email"), "%" + request.getEmail() + "%")
+                );
+            }
+
+            if (Objects.nonNull(request.getPhone())) {
+                predicates.add(
+                        builder.like(root.get("phone"), "%" + request.getPhone() + "%")
+                );
+            }
+
+            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
+        };
+
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        Page<Contact> contacts = contactRepository.findAll(specification, pageable);
+        List<ContactResponse> contactResponses = contacts.getContent().stream().map(this::toContactResponse).toList();
+
+        return new PageImpl<>(contactResponses, pageable, contacts.getTotalElements());
     }
 
     @Override

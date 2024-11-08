@@ -1,14 +1,13 @@
 package jordanmarcelino.contact.service;
 
 import jordanmarcelino.contact.dto.*;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public interface ContactService {
 
-    List<ContactResponse> search(SearchContactRequest searchContactRequest);
+    Page<ContactResponse> search(SearchContactRequest request);
 
     ContactResponse get(GetContactRequest request);
 
