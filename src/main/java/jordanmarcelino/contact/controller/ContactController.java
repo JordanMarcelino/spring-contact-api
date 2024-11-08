@@ -1,9 +1,6 @@
 package jordanmarcelino.contact.controller;
 
-import jordanmarcelino.contact.dto.ContactResponse;
-import jordanmarcelino.contact.dto.CreateContactRequest;
-import jordanmarcelino.contact.dto.GetContactRequest;
-import jordanmarcelino.contact.dto.WebResponse;
+import jordanmarcelino.contact.dto.*;
 import jordanmarcelino.contact.entity.User;
 import jordanmarcelino.contact.service.ContactService;
 import jordanmarcelino.contact.util.Message;
@@ -46,6 +43,43 @@ public class ContactController {
         return WebResponse.<ContactResponse>builder()
                 .message(Message.SUCCESS)
                 .data(response)
+                .build();
+    }
+
+    @PutMapping(
+            path = "/{contactId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<ContactResponse> update(
+            User user,
+            @RequestBody UpdateContactRequest request,
+            @PathVariable("contactId") Long contactId
+    ) {
+        request.setUser(user);
+        request.setId(contactId);
+        ContactResponse response = contactService.update(request);
+
+        return WebResponse.<ContactResponse>builder()
+                .message(Message.SUCCESS)
+                .data(response)
+                .build();
+    }
+
+    @DeleteMapping(
+            path = "/{contactId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<ContactResponse> delete(
+            User user,
+            @PathVariable("contactId") Long contactId
+    ) {
+        contactService.delete(new DeleteContactRequest(user, contactId));
+
+        return WebResponse.<ContactResponse>builder()
+                .message(Message.SUCCESS)
                 .build();
     }
 }

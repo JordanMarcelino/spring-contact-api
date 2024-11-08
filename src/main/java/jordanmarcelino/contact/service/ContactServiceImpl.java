@@ -58,12 +58,32 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
+    @Transactional
     public ContactResponse update(UpdateContactRequest request) {
-        return null;
+        validationService.validate(request);
+
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getId()).orElse(null);
+        if (Objects.isNull(contact)) {
+            throw new NotFoundException(CONTACT_NOT_FOUND);
+        }
+
+        contact.setFirstName(request.getFirstName());
+        contact.setLastName(request.getLastName());
+        contact.setEmail(request.getEmail());
+        contact.setPhone(request.getPhone());
+        contactRepository.save(contact);
+
+        return toContactResponse(contact);
     }
 
     @Override
+    @Transactional
     public void delete(DeleteContactRequest request) {
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getId()).orElse(null);
+        if (Objects.isNull(contact)) {
+            throw new NotFoundException(CONTACT_NOT_FOUND);
+        }
 
+        contactRepository.delete(contact);
     }
 }
