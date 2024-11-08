@@ -16,11 +16,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -430,5 +435,99 @@ class ContactControllerTest {
 
         verify(userRepository, times(1)).findByToken(anyString());
         verify(contactService, times(1)).delete(any(DeleteContactRequest.class));
+    }
+
+    @Test
+    void testSearchContactUnauthorized() throws Exception {
+        mockMvc.perform(
+                get("/api/contacts")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<List<ContactResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testSearchContactBadRequest() throws Exception {
+        when(contactService.search(any(SearchContactRequest.class)))
+                .thenThrow(ConstraintViolationException.class);
+
+        mockMvc.perform(
+                get("/api/contacts")
+                        .queryParam("name", "jo")
+                        .queryParam("page", "-1")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isBadRequest()
+        ).andDo(result -> {
+            WebResponse<List<ContactResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNotNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(contactService, times(1)).search(any(SearchContactRequest.class));
+    }
+
+    @Test
+    void testSearchContactSuccess() throws Exception {
+        List<ContactResponse> dummyContacts = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) {
+            dummyContacts.add(
+                    new ContactResponse(
+                            Integer.toUnsignedLong(i),
+                            "jordan",
+                            String.format("jor%d", i),
+                            String.format("jordan%d@gmail.com", i),
+                            String.format("0812412531%d", i)));
+        }
+        Page<ContactResponse> wantRes = new PageImpl<>(
+                dummyContacts.subList(0, 10), PageRequest.of(0, 10), dummyContacts.size()
+        );
+
+        when(contactService.search(any(SearchContactRequest.class)))
+                .thenReturn(wantRes);
+
+        mockMvc.perform(
+                get("/api/contacts")
+                        .queryParam("name", "jo")
+                        .queryParam("phone", "081")
+                        .queryParam("email", "@gmail.com")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<List<ContactResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertEquals(Message.SUCCESS, response.getMessage());
+            assertEquals(wantRes.getContent(), response.getData());
+            assertEquals(wantRes.getSize(), response.getPaging().getSize());
+            assertEquals(wantRes.getTotalPages(), response.getPaging().getTotalPage());
+            assertEquals(wantRes.hasNext(), response.getPaging().isHasNext());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(contactService, times(1)).search(any(SearchContactRequest.class));
     }
 }
