@@ -9,12 +9,34 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(path = "/api/contacts/{contactId}/addresses")
 @AllArgsConstructor
 public class AddressController {
 
     private final AddressService addressService;
+
+    @GetMapping(
+            path = "",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<List<AddressResponse>> get(
+            User user,
+            @PathVariable("contactId") Long contactId
+    ) {
+        GetAddressRequest request = new GetAddressRequest();
+        request.setUser(user);
+        request.setContactId(contactId);
+        List<AddressResponse> response = addressService.findAll(request);
+
+        return WebResponse.<List<AddressResponse>>builder()
+                .message(Message.SUCCESS)
+                .data(response)
+                .build();
+    }
 
     @PostMapping(
             path = "",
@@ -76,6 +98,24 @@ public class AddressController {
 
         return WebResponse.<AddressResponse>builder()
                 .message(Message.SUCCESS)
+                .build();
+    }
+
+    @GetMapping(
+            path = "{addressId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<AddressResponse> get(
+            User user,
+            @PathVariable("contactId") Long contactId,
+            @PathVariable("addressId") Long addressId
+    ) {
+        AddressResponse response = addressService.get(new GetAddressRequest(user, addressId, contactId));
+
+        return WebResponse.<AddressResponse>builder()
+                .message(Message.SUCCESS)
+                .data(response)
                 .build();
     }
 }

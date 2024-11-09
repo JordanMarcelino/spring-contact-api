@@ -33,7 +33,9 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<AddressResponse> findAll(GetAddressRequest request) {
-        return List.of();
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
+
+        return addressRepository.findAllByContact(contact).stream().map(this::toAddressResponse).toList();
     }
 
     @Override
@@ -59,7 +61,11 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressResponse get(GetAddressRequest request) {
-        return null;
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
+        Address address =
+                addressRepository.findFirstByContactAndId(contact, request.getId()).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
+
+        return toAddressResponse(address);
     }
 
     @Override
@@ -67,7 +73,8 @@ public class AddressServiceImpl implements AddressService {
         validationService.validate(request);
 
         Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
-        Address address = addressRepository.findByContact(contact).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
+        Address address =
+                addressRepository.findFirstByContactAndId(contact, request.getId()).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
 
         address.setCity(request.getCity());
         if (Objects.nonNull(request.getProvince())) {
@@ -92,7 +99,8 @@ public class AddressServiceImpl implements AddressService {
     public void delete(DeleteAddressRequest request) {
         Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
 
-        Address address = addressRepository.findByContact(contact).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
+        Address address =
+                addressRepository.findFirstByContactAndId(contact, request.getId()).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
 
         addressRepository.delete(address);
     }
