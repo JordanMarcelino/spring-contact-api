@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jordanmarcelino.contact.dto.WebResponse;
 import jordanmarcelino.contact.util.Message;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -55,4 +56,12 @@ public class ErrorController {
                 .status(exception.getStatusCode())
                 .body(WebResponse.builder().message(exception.getMessage()).build());
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<WebResponse<Object>> handleException(Exception exception) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(WebResponse.builder().message(Message.INTERNAL_SERVER_ERROR).build());
+    }
 }
+
