@@ -9,4 +9,6 @@ public interface UserService {
     UserResponse get(User user);
 
     UserResponse update(User user, UpdateUserRequest request);
+
+    void delete(User user);
 }

@@ -47,4 +47,17 @@ public class UserController {
                 .build();
     }
 
+    @DeleteMapping(
+            path = "/me",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<UserResponse> delete(User user) {
+        userService.delete(user);
+
+        return WebResponse.<UserResponse>builder()
+                .message(Message.SUCCESS)
+                .build();
+    }
+
 }

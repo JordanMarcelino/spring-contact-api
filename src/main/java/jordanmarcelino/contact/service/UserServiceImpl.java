@@ -1,9 +1,9 @@
 package jordanmarcelino.contact.service;
 
-import jdk.jfr.TransitionTo;
 import jordanmarcelino.contact.dto.UpdateUserRequest;
 import jordanmarcelino.contact.dto.UserResponse;
 import jordanmarcelino.contact.entity.User;
+import jordanmarcelino.contact.exception.NotFoundException;
 import jordanmarcelino.contact.repository.UserRepository;
 import jordanmarcelino.contact.util.BCrypt;
 import lombok.AllArgsConstructor;
@@ -47,5 +47,12 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .name(user.getName())
                 .build();
+    }
+
+    @Override
+    public void delete(User user) {
+        userRepository.findById(user.getId()).ifPresentOrElse(userRepository::delete, () -> {
+            throw new NotFoundException();
+        });
     }
 }
