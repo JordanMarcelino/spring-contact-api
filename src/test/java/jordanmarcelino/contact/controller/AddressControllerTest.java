@@ -24,6 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,8 +88,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNull(response.getErrors());
@@ -117,8 +120,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNotNull(response.getErrors());
@@ -159,8 +163,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertEquals(Message.SUCCESS, response.getMessage());
             assertEquals(wantRes, response.getData());
@@ -190,8 +195,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNull(response.getErrors());
@@ -221,8 +227,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNotNull(response.getErrors());
@@ -255,8 +262,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
 
             assertNull(response.getData());
@@ -298,8 +306,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertEquals(Message.SUCCESS, response.getMessage());
             assertEquals(wantRes, response.getData());
@@ -314,15 +323,15 @@ class AddressControllerTest {
     void testDeleteAddressUnauthorized() throws Exception {
         mockMvc.perform(
                 delete("/api/contacts/1/addresses/1")
-                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
         ).andExpectAll(
                 status().isUnauthorized()
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNull(response.getErrors());
@@ -335,7 +344,6 @@ class AddressControllerTest {
 
         mockMvc.perform(
                 delete("/api/contacts/1/addresses/1")
-                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .cookie(apiKey)
         ).andExpectAll(
@@ -343,8 +351,9 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertNull(response.getData());
             assertNull(response.getErrors());
@@ -357,7 +366,6 @@ class AddressControllerTest {
 
         mockMvc.perform(
                 delete("/api/contacts/1/addresses/1")
-                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .cookie(apiKey)
         ).andExpectAll(
@@ -365,13 +373,177 @@ class AddressControllerTest {
         ).andDo(result -> {
             WebResponse<AddressResponse> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<WebResponse<AddressResponse>>() {}
-            ) ;
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
 
             assertEquals(Message.SUCCESS, response.getMessage());
             assertNull(response.getData());
             assertNull(response.getErrors());
         });
+    }
+
+    @Test
+    void testGetAddressUnauthorized() throws Exception {
+        mockMvc.perform(
+                get("/api/contacts/1/addresses/1")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testGetAddressNotFound() throws Exception {
+        when(addressService.get(any(GetAddressRequest.class)))
+                .thenThrow(new NotFoundException());
+
+        mockMvc.perform(
+                get("/api/contacts/1/addresses/1")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).get(any(GetAddressRequest.class));
+    }
+
+    @Test
+    void testGetAddressSuccess() throws Exception {
+        AddressResponse wantRes = new AddressResponse();
+        wantRes.setId(1L);
+        wantRes.setCity("Indonesia");
+        wantRes.setProvince("Jakarta");
+        wantRes.setCountry("Indonesia");
+        wantRes.setStreet("Jalan Karet Pedurenan");
+        wantRes.setPostalCode("12345");
+
+        when(addressService.get(any(GetAddressRequest.class)))
+                .thenReturn(wantRes);
+
+        mockMvc.perform(
+                get("/api/contacts/1/addresses/1")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {
+                    }
+            );
+
+            assertEquals(Message.SUCCESS, response.getMessage());
+            assertEquals(wantRes, response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).get(any(GetAddressRequest.class));
+    }
+
+    @Test
+    void testFindAllAddressUnauthorized() throws Exception {
+        mockMvc.perform(
+                get("/api/contacts/1/addresses")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<List<AddressResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<List<AddressResponse>>>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testFindAllAddressNotFound() throws Exception {
+        when(addressService.findAll(any(GetAddressRequest.class)))
+                .thenThrow(new NotFoundException());
+
+        mockMvc.perform(
+                get("/api/contacts/1/addresses")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            WebResponse<List<AddressResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<List<AddressResponse>>>() {
+                    }
+            );
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).findAll(any(GetAddressRequest.class));
+    }
+
+    @Test
+    void testFindAllAddressSuccess() throws Exception {
+        List<AddressResponse> wantRes = new ArrayList<>();
+        AddressResponse address = new AddressResponse();
+        address.setId(1L);
+        address.setCity("Indonesia");
+        address.setProvince("Jakarta");
+        address.setCountry("Indonesia");
+        address.setStreet("Jalan Karet Pedurenan");
+        address.setPostalCode("12345");
+
+        wantRes.add(address);
+
+        when(addressService.findAll(any(GetAddressRequest.class)))
+                .thenReturn(wantRes);
+
+        mockMvc.perform(
+                get("/api/contacts/1/addresses")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<List<AddressResponse>> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<List<AddressResponse>>>() {
+                    }
+            );
+
+            assertEquals(Message.SUCCESS, response.getMessage());
+            assertEquals(wantRes, response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).findAll(any(GetAddressRequest.class));
     }
 }
 
