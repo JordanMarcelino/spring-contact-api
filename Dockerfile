@@ -8,7 +8,7 @@ RUN chmod +x gradlew
 
 RUN ./gradlew clean bootJar
 
-FROM eclipse-temurin:21-jre AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app
 
