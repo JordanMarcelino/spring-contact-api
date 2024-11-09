@@ -111,13 +111,6 @@ paths:
                     type: string
                   data:
                     $ref: "#/components/schemas/User"
-  /api/users/{userId}:
-    parameters:
-      - name: userId
-        required: true
-        in: path
-        schema:
-          type: number
     patch:
       description: Update user profile
       security:
