@@ -50,6 +50,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public Token login(UserLoginRequest request) {
+        validationService.validate(request);
+
         Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
         if (optionalUser.isEmpty()) {
             throw new LoginFailedException();
