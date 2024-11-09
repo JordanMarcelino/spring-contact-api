@@ -1,8 +1,6 @@
 package jordanmarcelino.contact.controller;
 
-import jordanmarcelino.contact.dto.AddressResponse;
-import jordanmarcelino.contact.dto.CreateAddressRequest;
-import jordanmarcelino.contact.dto.WebResponse;
+import jordanmarcelino.contact.dto.*;
 import jordanmarcelino.contact.entity.User;
 import jordanmarcelino.contact.service.AddressService;
 import jordanmarcelino.contact.util.Message;
@@ -37,6 +35,47 @@ public class AddressController {
         return WebResponse.<AddressResponse>builder()
                 .message(Message.SUCCESS)
                 .data(response)
+                .build();
+    }
+
+    @PutMapping(
+            path = "/{addressId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<AddressResponse> update(
+            User user,
+            @RequestBody UpdateAddressRequest request,
+            @PathVariable("contactId") Long contactId,
+            @PathVariable("addressId") Long addressId
+    ) {
+        request.setUser(user);
+        request.setContactId(contactId);
+        request.setId(addressId);
+
+        AddressResponse response = addressService.update(request);
+
+        return WebResponse.<AddressResponse>builder()
+                .message(Message.SUCCESS)
+                .data(response)
+                .build();
+    }
+
+    @DeleteMapping(
+            path = "{addressId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.OK)
+    public WebResponse<AddressResponse> delete(
+            User user,
+            @PathVariable("contactId") Long contactId,
+            @PathVariable("addressId") Long addressId
+    ) {
+        addressService.delete(new DeleteAddressRequest(user, addressId, contactId));
+
+        return WebResponse.<AddressResponse>builder()
+                .message(Message.SUCCESS)
                 .build();
     }
 }

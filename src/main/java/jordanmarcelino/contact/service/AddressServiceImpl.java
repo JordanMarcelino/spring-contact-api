@@ -64,11 +64,36 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressResponse update(UpdateAddressRequest request) {
-        return null;
+        validationService.validate(request);
+
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
+        Address address = addressRepository.findByContact(contact).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
+
+        address.setCity(request.getCity());
+        if (Objects.nonNull(request.getProvince())) {
+            address.setProvince(request.getProvince());
+        }
+        if (Objects.nonNull(request.getCountry())) {
+            address.setCountry(request.getCountry());
+        }
+        if (Objects.nonNull(request.getStreet())) {
+            address.setStreet(request.getStreet());
+        }
+        if (Objects.nonNull(request.getPostalCode())) {
+            address.setPostalCode(request.getPostalCode());
+        }
+
+        addressRepository.save(address);
+
+        return toAddressResponse(address);
     }
 
     @Override
     public void delete(DeleteAddressRequest request) {
+        Contact contact = contactRepository.findByUserAndId(request.getUser(), request.getContactId()).orElseThrow(() -> new NotFoundException(CONTACT_NOT_FOUND));
 
+        Address address = addressRepository.findByContact(contact).orElseThrow(() -> new NotFoundException(ADDRESS_NOT_FOUND));
+
+        addressRepository.delete(address);
     }
 }
