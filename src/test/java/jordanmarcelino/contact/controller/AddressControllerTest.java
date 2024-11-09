@@ -4,15 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.validation.ConstraintViolationException;
-import jordanmarcelino.contact.dto.AddressResponse;
-import jordanmarcelino.contact.dto.CreateAddressRequest;
-import jordanmarcelino.contact.dto.CreateContactRequest;
-import jordanmarcelino.contact.dto.WebResponse;
+import jordanmarcelino.contact.dto.*;
 import jordanmarcelino.contact.entity.User;
+import jordanmarcelino.contact.exception.NotFoundException;
 import jordanmarcelino.contact.repository.AddressRepository;
 import jordanmarcelino.contact.repository.UserRepository;
 import jordanmarcelino.contact.service.AddressService;
 import jordanmarcelino.contact.util.Message;
+import org.hibernate.sql.Update;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrdererContext;
 import org.junit.jupiter.api.Test;
@@ -171,4 +170,209 @@ class AddressControllerTest {
         verify(userRepository, times(1)).findByToken(anyString());
         verify(addressService, times(1)).save(any(CreateAddressRequest.class));
     }
+
+    @Test
+    void testUpdateAddressUnauthorized() throws Exception {
+        UpdateAddressRequest request = new UpdateAddressRequest();
+        request.setCity("Indonesia");
+        request.setProvince("Jakarta");
+        request.setCountry("Indonesia");
+        request.setStreet("Jalan Karet Pedurenan");
+        request.setPostalCode("12345");
+
+        mockMvc.perform(
+                put("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testUpdateAddressBadRequest() throws Exception {
+        UpdateAddressRequest request = new UpdateAddressRequest();
+        request.setCity("");
+        request.setProvince("");
+        request.setCountry("");
+        request.setStreet("");
+        request.setPostalCode("");
+
+        when(addressService.update(any(UpdateAddressRequest.class)))
+                .thenThrow(ConstraintViolationException.class);
+
+        mockMvc.perform(
+                put("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+                        .content(objectMapper.writeValueAsString(request))
+        ).andExpectAll(
+                status().isBadRequest()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertNull(response.getData());
+            assertNotNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).update(any(UpdateAddressRequest.class));
+    }
+
+    @Test
+    void testUpdateAddressNotFound() throws Exception {
+        UpdateAddressRequest request = new UpdateAddressRequest();
+        request.setCity("Indonesia");
+        request.setProvince("Jakarta");
+        request.setCountry("Indonesia");
+        request.setStreet("Jalan Karet Pedurenan");
+        request.setPostalCode("12345");
+
+        when(addressService.update(any(UpdateAddressRequest.class)))
+                .thenThrow(new NotFoundException());
+
+        mockMvc.perform(
+                put("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+                        .content(objectMapper.writeValueAsString(request))
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).update(any(UpdateAddressRequest.class));
+    }
+
+    @Test
+    void testUpdateAddressSuccess() throws Exception {
+        UpdateAddressRequest request = new UpdateAddressRequest();
+        request.setCity("Indonesia");
+        request.setProvince("Jakarta");
+        request.setCountry("Indonesia");
+        request.setStreet("Jalan Karet Pedurenan");
+        request.setPostalCode("12345");
+
+        AddressResponse wantRes = new AddressResponse();
+        wantRes.setId(1L);
+        wantRes.setCity(request.getCity());
+        wantRes.setProvince(request.getProvince());
+        wantRes.setCountry(request.getCountry());
+        wantRes.setStreet(request.getStreet());
+        wantRes.setPostalCode(request.getPostalCode());
+
+        when(addressService.update(any(UpdateAddressRequest.class)))
+                .thenReturn(wantRes);
+
+        mockMvc.perform(
+                put("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+                        .content(objectMapper.writeValueAsString(request))
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertEquals(Message.SUCCESS, response.getMessage());
+            assertEquals(wantRes, response.getData());
+            assertNull(response.getErrors());
+        });
+
+        verify(userRepository, times(1)).findByToken(anyString());
+        verify(addressService, times(1)).update(any(UpdateAddressRequest.class));
+    }
+
+    @Test
+    void testDeleteAddressUnauthorized() throws Exception {
+        mockMvc.perform(
+                delete("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testDeleteAddressNotFound() throws Exception {
+        doThrow(new NotFoundException()).when(addressService).delete(any(DeleteAddressRequest.class));
+
+        mockMvc.perform(
+                delete("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isNotFound()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
+
+    @Test
+    void testDeleteAddressSuccess() throws Exception {
+        doNothing().when(addressService).delete(any(DeleteAddressRequest.class));
+
+        mockMvc.perform(
+                delete("/api/contacts/1/addresses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .cookie(apiKey)
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            WebResponse<AddressResponse> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<WebResponse<AddressResponse>>() {}
+            ) ;
+
+            assertEquals(Message.SUCCESS, response.getMessage());
+            assertNull(response.getData());
+            assertNull(response.getErrors());
+        });
+    }
 }
+
+
